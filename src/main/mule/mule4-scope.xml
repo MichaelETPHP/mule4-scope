@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="12370843-99c7-4b11-be31-1bb7c7d5563b" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="14abdc98-66d9-4267-8e63-2c6c79b93d6d" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" database="mule_class_db" />
+	</db:config>
+	<flow name="mule4-scopeFlow" doc:id="5c570f0c-7ac2-426a-85b7-650359384ed8" >
+		<http:listener doc:name="Listener" doc:id="eab29e96-a924-4b4b-902a-2c5d785b95a0" path="/scope2" config-ref="HTTP_Listener_config"/>
+		<async doc:name="Async" doc:id="0613d5fd-8ec3-4bf6-97e0-dfc27e90cb5a" >
+			<logger level="INFO" doc:name="Logger" doc:id="01f52070-479f-4c9e-a9dd-f87089a28e90" message="#[%dw 2.0&#10;import * from dw::Runtime&#10;output application/json&#10;---&#10;{&#10;	'DateAndTime (Async Scope)': now() as String {format : &quot;dd-MM-yyyy HH:mm:ss&quot;} wait 6000&#10;}]" />
+			<db:insert doc:name="Insert" doc:id="ed485f8a-dde1-4145-b920-09f42006fa16" config-ref="Database_Config">
+				<db:sql ><![CDATA[INSERT INTO tb_product (product_name, description, video_url, category_id, price) 
+VALUES(:product_name, :description, :video_url, :category_id, :price)]]></db:sql>
+				<db:input-parameters ><![CDATA[#[{
+	product_name: payload.product_name,
+	description:  payload.description,
+	video_url: payload.video_url,
+	category_id: payload.category_id,
+	price: payload.price
+}]]]></db:input-parameters>
+			</db:insert>
+		</async>
+		<ee:transform doc:name="Transform Message" doc:id="988f4211-123a-4bd1-9d0c-fc489b838468" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'DateAndTime (Async Scope)': now() as String {format : "dd-MM-yyyy HH:mm:ss"}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
