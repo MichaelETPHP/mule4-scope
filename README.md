@@ -1,4 +1,4 @@
-# mule4-scope4
+# mule4-scope
 Async Scope is an asynchronous processing block that executes simultaneously with the main flow.
 
 
